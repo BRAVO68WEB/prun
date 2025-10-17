@@ -1,0 +1,10 @@
+tasks = ["good", "bad", "another"]
+
+[task.good]
+cmd = "echo 'Good task running'; sleep 1; echo 'Good task done'"
+
+[task.bad]
+cmd = "echo 'Bad task starting'; sleep 0.5; exit 1"
+
+[task.another]
+cmd = "for i in 1 2 3 4 5; do echo 'Another task: '$i; sleep 0.5; done"

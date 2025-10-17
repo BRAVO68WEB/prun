@@ -1,0 +1,10 @@
+tasks = ["task1", "task2", "task3"]
+
+[task.task1]
+cmd = "for i in 1 2 3; do echo 'Task 1: line '$i; sleep 0.5; done"
+
+[task.task2]
+cmd = "for i in 1 2 3; do echo 'Task 2: line '$i; sleep 0.3; done"
+
+[task.task3]
+cmd = "echo 'Task 3: starting'; sleep 1; echo 'Task 3: done'"

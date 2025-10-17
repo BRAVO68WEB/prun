@@ -1,0 +1,7 @@
+tasks = ["hello", "world"]
+
+[task.hello]
+cmd = "for i in 1 2 3; do echo 'Hello '$i; sleep 1; done"
+
+[task.world]
+cmd = "for i in 1 2 3; do echo 'World '$i; sleep 1; done"

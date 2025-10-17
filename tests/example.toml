@@ -1,0 +1,10 @@
+tasks = ["app", "redis_server", "server"]
+
+[task.app]
+cmd = "echo 'App server starting on port 3000...'; sleep 1; for i in 1 2 3; do echo 'App: Processing request '$i; sleep 1; done"
+
+[task.redis_server]
+cmd = "echo 'Redis server starting on port 6379...'; sleep 2; echo 'Redis: Ready to accept connections'"
+
+[task.server]
+cmd = "echo 'API server starting...'; sleep 0.5; for i in 1 2 3 4; do echo 'API: Request '$i' handled'; sleep 0.8; done"

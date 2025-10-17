@@ -1,0 +1,12 @@
+tasks = ["web", "api", "worker"]
+
+[task.web]
+cmd = "python3 -m http.server 8000"
+path = "/tmp"
+
+[task.api]
+cmd = "echo 'API starting...'; while true; do echo 'API: ping'; sleep 2; done"
+env = { API_PORT = "3000", ENV = "development" }
+
+[task.worker]
+cmd = "for i in {1..5}; do echo 'Worker: processing job '$i; sleep 1; done"
