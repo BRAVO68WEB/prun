@@ -10,6 +10,7 @@ import (
 
 	"prun/internal/config"
 	"prun/internal/runner"
+	"prun/internal/ui"
 )
 
 const (
@@ -31,6 +32,12 @@ func main() {
 
 	showHelp := flag.Bool("h", false, "show help")
 	flag.BoolVar(showHelp, "help", false, "show help")
+
+	interactive := flag.Bool("i", false, "run in interactive TUI mode")
+	flag.BoolVar(interactive, "interactive", false, "run in interactive TUI mode")
+
+	watch := flag.Bool("w", false, "watch files and restart all tasks on changes")
+	flag.BoolVar(watch, "watch", false, "watch files and restart all tasks on changes")
 
 	flag.Parse()
 
@@ -75,7 +82,64 @@ func main() {
 	}
 
 	// Create runner
-	r := runner.New(cfg, tasksToRun, *verbose)
+	var r *runner.Runner
+	var watcher *runner.Watcher
+
+	// Check if any task has watch enabled or global watch flag is set
+	needsWatcher := *watch
+	if !needsWatcher {
+		for _, taskName := range tasksToRun {
+			if cfg.TaskDefs[taskName].Watch {
+				needsWatcher = true
+				break
+			}
+		}
+	}
+
+	// If interactive mode, launch TUI
+	if *interactive {
+		eventChan := make(chan runner.LogEvent, 100)
+
+		// Setup signal handling
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		// Use watcher if needed, otherwise regular runner
+		if needsWatcher {
+			var watcherErr error
+			watcher, watcherErr = runner.NewWatcher(cfg, tasksToRun, *verbose, *watch)
+			if watcherErr != nil {
+				fmt.Fprintf(os.Stderr, "prun: failed to create watcher: %v\n", watcherErr)
+				os.Exit(exitCodeRunFailed)
+			}
+			defer watcher.Close()
+			watcher.SetEventChannel(eventChan)
+
+			// Run tasks with watching in background
+			go func() {
+				_ = watcher.Start(ctx)
+				close(eventChan)
+			}()
+		} else {
+			r = runner.New(cfg, tasksToRun, *verbose)
+			r.SetEventChannel(eventChan)
+
+			// Run tasks in background
+			go func() {
+				_ = r.Run(ctx)
+				close(eventChan)
+			}()
+		}
+
+		// Start TUI
+		if err := ui.Start(tasksToRun, eventChan); err != nil {
+			fmt.Fprintf(os.Stderr, "prun: TUI error: %v\n", err)
+			os.Exit(exitCodeRunFailed)
+		}
+		return
+	}
+
+	// Non-interactive mode
 
 	// Setup signal handling
 	ctx, cancel := context.WithCancel(context.Background())
@@ -86,9 +150,29 @@ func main() {
 
 	// Run tasks in a goroutine
 	errChan := make(chan error, 1)
-	go func() {
-		errChan <- r.Run(ctx)
-	}()
+
+	if needsWatcher {
+		var watcherErr error
+		watcher, watcherErr = runner.NewWatcher(cfg, tasksToRun, *verbose, *watch)
+		if watcherErr != nil {
+			fmt.Fprintf(os.Stderr, "prun: failed to create watcher: %v\n", watcherErr)
+			os.Exit(exitCodeRunFailed)
+		}
+		defer watcher.Close()
+
+		if *verbose {
+			fmt.Fprintln(os.Stderr, "prun: watch mode enabled")
+		}
+
+		go func() {
+			errChan <- watcher.Start(ctx)
+		}()
+	} else {
+		r = runner.New(cfg, tasksToRun, *verbose)
+		go func() {
+			errChan <- r.Run(ctx)
+		}()
+	}
 
 	// Wait for completion or signal
 	select {
@@ -121,10 +205,15 @@ Flags:
   -c, --config <path>   Path to config file (default: prun.toml)
   -v, --verbose         Enable verbose logging
   -l, --list            List configured tasks and exit
+  -i, --interactive     Run in interactive TUI mode
+  -w, --watch           Watch files and restart all tasks on changes
   -h, --help            Show this help message
 
 Examples:
   prun                  Run all tasks defined in prun.toml
+  prun -i               Run in interactive mode with TUI
+  prun -w               Run with file watching enabled for all tasks
+  prun -i -w            Run in interactive mode with file watching
   prun app server       Run only 'app' and 'server' tasks
   prun -c dev.toml      Use dev.toml instead of prun.toml
   prun --list           List all configured tasks
@@ -136,10 +225,12 @@ Config format (prun.toml):
 
   [task.app]
   cmd = "npm run dev"
+  watch = true          # Restart this task on file changes
 
   [task.server]
   cmd = "./server"
   path = "/path/to/server"
+  watch = false         # Don't watch this task
   
 For more information, see PROJECT_SPEC.md`)
 }

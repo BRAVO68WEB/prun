@@ -1,0 +1,18 @@
+tasks = ["frontend", "backend", "docs"]
+
+[task.frontend]
+cmd = "echo 'Frontend dev server starting...'; while true; do echo 'Frontend: Processing request at' $(date); sleep 3; done"
+path = "."
+watch = true  # Restart when files change
+env = { NODE_ENV = "development" }
+
+[task.backend]
+cmd = "echo 'Backend API starting...'; while true; do echo 'Backend: Handling request' $(date); sleep 2; done"
+path = "."
+watch = true  # Restart when files change
+env = { PORT = "8080" }
+
+[task.docs]
+cmd = "echo 'Docs server running...'; while true; do echo 'Docs: Serving documentation' $(date); sleep 5; done"
+path = "."
+watch = false  # Don't restart (static content)

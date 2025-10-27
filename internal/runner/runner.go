@@ -14,22 +14,37 @@ import (
 	"prun/internal/config"
 )
 
+// LogEvent represents a log line from a task
+type LogEvent struct {
+	Task  string
+	Line  string
+	IsErr bool
+	Time  time.Time
+}
+
 // Runner manages multiple task processes
 type Runner struct {
-	cfg     *config.Config
-	tasks   []string
-	verbose bool
-	output  *outputWriter
+	cfg       *config.Config
+	tasks     []string
+	verbose   bool
+	output    *outputWriter
+	eventChan chan LogEvent
 }
 
 // New creates a new Runner
 func New(cfg *config.Config, tasks []string, verbose bool) *Runner {
 	return &Runner{
-		cfg:     cfg,
-		tasks:   tasks,
-		verbose: verbose,
-		output:  newOutputWriter(os.Stdout),
+		cfg:       cfg,
+		tasks:     tasks,
+		verbose:   verbose,
+		output:    newOutputWriter(os.Stdout),
+		eventChan: nil, // will be set if interactive mode
 	}
+}
+
+// SetEventChannel sets a channel for publishing log events (for interactive UI)
+func (r *Runner) SetEventChannel(ch chan LogEvent) {
+	r.eventChan = ch
 }
 
 // Run starts all tasks and waits for them to complete
@@ -87,10 +102,10 @@ func (r *Runner) runTask(ctx context.Context, taskName string) error {
 
 	var cmd *exec.Cmd
 	if useShell {
-		cmd = exec.CommandContext(ctx, "/bin/sh", "-c", taskDef.Cmd)
+		cmd = exec.CommandContext(ctx, "/bin/bash", "-c", taskDef.Cmd)
 	} else {
 		// For non-shell, we'd need to parse the command - simplified for now
-		cmd = exec.CommandContext(ctx, "/bin/sh", "-c", taskDef.Cmd)
+		cmd = exec.CommandContext(ctx, "/bin/bash", "-c", taskDef.Cmd)
 	}
 
 	// Set working directory if specified
@@ -158,7 +173,19 @@ func (r *Runner) streamOutput(taskName string, reader io.Reader) {
 	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {
 		line := scanner.Text()
-		r.output.WritePrefix(taskName, line+"\n")
+
+		// Send to event channel if interactive mode
+		if r.eventChan != nil {
+			r.eventChan <- LogEvent{
+				Task:  taskName,
+				Line:  line,
+				IsErr: false,
+				Time:  time.Now(),
+			}
+		} else {
+			// Normal output mode
+			r.output.WritePrefix(taskName, line+"\n")
+		}
 	}
 }
 

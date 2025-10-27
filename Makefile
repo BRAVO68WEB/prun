@@ -7,11 +7,11 @@ help:
 	@echo "  test     - Run tests"
 	@echo "  clean    - Remove build artifacts"
 	@echo "  install  - Install prun to /usr/local/bin (requires sudo)"
-	@echo "  run      - Build and run with example.toml"
+	@echo "  run      - Build and run prun"
 	@echo "  help     - Show this help message"
 
 # Build the prun binary
-build:
+build: clean
 	@echo "Building prun..."
 	@go build -o prun ./cmd/prun
 	@echo "Build complete: ./prun"
@@ -34,7 +34,7 @@ install: build
 	@sudo mv prun /usr/local/bin/
 	@echo "Installation complete"
 
-# Run prun with the example config
+# Run prun
 run: build
-	@echo "Running prun with examples/simple.toml..."
-	@./prun -c examples/simple.toml
+	@echo "Running prun..."
+	@./prun

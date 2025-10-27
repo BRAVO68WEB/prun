@@ -20,6 +20,7 @@ type TaskDef struct {
 	Env     map[string]string `toml:"env"`
 	Restart interface{}       `toml:"restart"` // bool or string
 	Shell   *bool             `toml:"shell"`
+	Watch   bool              `toml:"watch"` // restart on file changes
 }
 
 // Load reads and parses the prun.toml file
