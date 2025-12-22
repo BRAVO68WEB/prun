@@ -1,6 +1,14 @@
-# prun
+<p align="center">
+  <img src="docs/public/Prun.png" alt="Prun Logo" width="200">
+</p>
 
-A simple CLI tool to run multiple commands in parallel with real-time output streaming.
+<p align="center">
+  <strong>prun</strong>
+</p>
+
+<p align="center">
+  A simple CLI tool to run multiple commands in parallel with real-time output streaming.
+</p>
 
 ## Installation
 
@@ -216,22 +224,6 @@ cmd = "docker-compose up postgres"
 watch = false  # Don't restart this task
 ```
 
-## Features
-
-- ✅ Run multiple commands in parallel
-- ✅ Real-time output streaming with task prefixes
-- ✅ **Interactive TUI mode** with task list and filtered logs
-- ✅ **File watching** - automatically restart tasks on file changes (per-task or global)
-- ✅ **Scrollable logs** - PgUp/PgDn, Home/End navigation in TUI
-- ✅ **Word wrapping** - long log lines wrap instead of truncate
-- ✅ Graceful shutdown on Ctrl-C (SIGINT)
-- ✅ Automatic cleanup when any task fails
-- ✅ Per-task working directories
-- ✅ Per-task environment variables
-- ✅ Run specific tasks by name
-- ✅ List configured tasks
-- ✅ Beautiful terminal UI with colors and status indicators
-
 ## How It Works
 
 1. `prun` reads the `prun.toml` configuration file
@@ -297,10 +289,6 @@ make run
 ├── PROJECT_SPEC.md          # Detailed specification
 └── README.md
 ```
-
-## License
-
-MIT
 
 ## Contributing
 
