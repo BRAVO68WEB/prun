@@ -124,6 +124,11 @@ func (r *Runner) runTask(ctx context.Context, taskName string) error {
 		Setpgid: true,
 	}
 
+	// Configure cancellation to kill the process group
+	cmd.Cancel = func() error {
+		return syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+	}
+
 	// Capture stdout and stderr
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
