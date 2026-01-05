@@ -1,0 +1,753 @@
+# Getting Started
+
+
+
+This guide will help you get up and running with prun in just a few minutes.
+
+## Prerequisites
+
+* prun installed (see [Installation](/docs/installation))
+* A project directory where you want to run multiple commands
+
+## Step 1: Create a Configuration File
+
+Create a `prun.toml` file in your project root. This file defines the tasks you want to run in parallel.
+
+Here's a simple example:
+
+```toml
+tasks = ["app", "redis"]
+
+[task.app]
+cmd = "npm run dev"
+
+[task.redis]
+cmd = "redis-server"
+```
+
+## Step 2: Run Your Tasks
+
+Simply run:
+
+```bash
+prun
+```
+
+This will start all tasks defined in your `prun.toml` file in parallel. You'll see output from all tasks with prefixes like `[app]` and `[redis]` to distinguish between them.
+
+## Step 3: Run Specific Tasks
+
+You can also run only specific tasks by passing their names as arguments:
+
+```bash
+prun app
+```
+
+Or multiple specific tasks:
+
+```bash
+prun app redis
+```
+
+## Interactive Mode
+
+For a better experience, especially when running many tasks, use interactive mode:
+
+```bash
+prun -i
+```
+
+Interactive mode provides:
+
+* A task list showing the status of each task
+* Filtered log view for each task
+* Keyboard navigation to switch between tasks
+* Scrollable logs with PgUp/PgDn, Home/End
+
+### Interactive Mode Controls
+
+* `↑/↓` or `k/j` - Navigate between tasks
+* `PgUp/PgDn` - Scroll logs up/down
+* `Home/End` - Jump to top/bottom of logs
+* `Space` - Page down in logs
+* `q` or `Esc` or `Ctrl-C` - Quit and stop all tasks
+
+## File Watching
+
+Enable automatic restarts when files change:
+
+```bash
+prun -w
+```
+
+Or combine with interactive mode:
+
+```bash
+prun -i -w
+```
+
+You can also configure per-task watching in your `prun.toml`:
+
+```toml
+[task.app]
+cmd = "npm run dev"
+watch = true  # Restart this task on file changes
+```
+
+## Common Use Cases
+
+### Full-Stack Development
+
+Run your frontend, backend, and database together:
+
+```toml
+tasks = ["frontend", "backend", "database"]
+
+[task.frontend]
+cmd = "npm run dev"
+path = "./frontend"
+
+[task.backend]
+cmd = "go run main.go"
+path = "./backend"
+
+[task.database]
+cmd = "docker-compose up postgres"
+```
+
+### Microservices
+
+Run multiple services in parallel:
+
+```toml
+tasks = ["api", "auth", "worker"]
+
+[task.api]
+cmd = "python -m uvicorn api:app --reload"
+path = "./services/api"
+
+[task.auth]
+cmd = "python -m uvicorn auth:app --reload"
+path = "./services/auth"
+
+[task.worker]
+cmd = "celery -A tasks worker"
+path = "./services/worker"
+```
+
+### Development Tools
+
+Run your app alongside development tools:
+
+```toml
+tasks = ["app", "redis", "vite"]
+
+[task.app]
+cmd = "bun dev"
+
+[task.redis]
+cmd = "redis-server"
+
+[task.vite]
+cmd = "vite build --watch"
+```
+
+## Next Steps
+
+* Learn about [Configuration](/docs/prun-toml-configuration) options
+* Check out the [Original Spec](/docs/original-spec) for detailed behavior
+* Explore all available CLI flags with `prun --help`
+
+
+# Installation
+
+
+
+# Installation
+
+prun can be installed by building from source. This guide covers installation on Linux, macOS, and Windows.
+
+## Prerequisites
+
+* Go 1.21 or later installed on your system
+* Git (for cloning the repository, if installing from source)
+
+## Build from Source
+
+### Step 1: Clone the Repository
+
+```bash
+git clone https://github.com/BRAVO68WEB/prun
+cd prun
+```
+
+Or if you already have the source code, navigate to the project directory.
+
+### Step 2: Build the Binary
+
+```bash
+go build -o prun ./cmd/prun
+```
+
+This will create a `prun` binary in the current directory.
+
+### Step 3: Install to PATH
+
+#### Linux / macOS
+
+Move the binary to a directory in your PATH:
+
+```bash
+sudo mv prun /usr/local/bin/
+```
+
+Or install to a user-local directory:
+
+```bash
+mkdir -p ~/.local/bin
+mv prun ~/.local/bin/
+```
+
+Make sure `~/.local/bin` is in your PATH. Add this to your `~/.bashrc`, `~/.zshrc`, or equivalent:
+
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+#### Windows
+
+Move the binary to a directory in your PATH, or add the current directory to your PATH environment variable.
+
+### Step 4: Verify Installation
+
+Verify that prun is installed correctly:
+
+```bash
+prun --help
+```
+
+You should see the help message with available commands and flags.
+
+## Alternative: Use Directly
+
+If you don't want to install prun globally, you can use it directly from the build directory:
+
+```bash
+./prun
+```
+
+Or specify the full path:
+
+```bash
+/path/to/prun
+```
+
+## Using Make
+
+The project includes a Makefile with convenient commands:
+
+### Build
+
+```bash
+make build
+```
+
+### Run Tests
+
+```bash
+make test
+```
+
+### Run with Example Config
+
+```bash
+make run
+```
+
+## Development Installation
+
+For development, you can build and test locally:
+
+```bash
+# Build
+go build -o prun ./cmd/prun
+
+# Test
+go test ./...
+
+# Run with your config
+./prun -c prun.toml
+```
+
+## Troubleshooting
+
+### Command Not Found
+
+If you get a "command not found" error after installation:
+
+1. Verify the binary exists in the PATH:
+   ```bash
+   which prun  # Linux/macOS
+   where prun  # Windows
+   ```
+
+2. Check your PATH environment variable:
+   ```bash
+   echo $PATH  # Linux/macOS
+   echo %PATH% # Windows
+   ```
+
+3. Make sure the binary is executable:
+   ```bash
+   chmod +x prun
+   ```
+
+### Build Errors
+
+If you encounter build errors:
+
+1. Ensure you have Go 1.21 or later:
+   ```bash
+   go version
+   ```
+
+2. Update your Go modules:
+   ```bash
+   go mod tidy
+   ```
+
+3. Clean and rebuild:
+   ```bash
+   go clean
+   go build -o prun ./cmd/prun
+   ```
+
+## Next Steps
+
+Once installed, check out the [Getting Started](/docs/getting-started) guide to create your first `prun.toml` configuration file.
+
+
+# Configuration
+
+
+
+# Configuration
+
+The `prun.toml` file is a TOML configuration file that defines the tasks you want to run in parallel. This guide covers all available configuration options.
+
+## File Location
+
+By default, prun looks for `prun.toml` in the current working directory. You can specify a different location using the `-c` or `--config` flag:
+
+```bash
+prun -c /path/to/custom.toml
+```
+
+## Basic Structure
+
+A minimal `prun.toml` file requires:
+
+1. A `tasks` array listing the task names
+2. A `[task.<name>]` section for each task with a `cmd` field
+
+```toml
+tasks = ["app", "server"]
+
+[task.app]
+cmd = "npm run dev"
+
+[task.server]
+cmd = "python -m http.server 8000"
+```
+
+## Configuration Fields
+
+### Top-Level: `tasks`
+
+An ordered array of task names. Tasks are started in this order but run concurrently.
+
+```toml
+tasks = ["database", "backend", "frontend"]
+```
+
+**Note:** The order is primarily for readability. All tasks run in parallel once started.
+
+### Task Configuration: `[task.<name>]`
+
+Each task must have its own configuration section.
+
+#### Required Fields
+
+##### `cmd` (string)
+
+The command to execute. This is the only required field for each task.
+
+```toml
+[task.app]
+cmd = "npm run dev"
+```
+
+Commands are executed through a shell by default, so you can use shell features like pipes, redirects, and environment variable expansion:
+
+```toml
+[task.app]
+cmd = "npm run dev | tee app.log"
+```
+
+#### Optional Fields
+
+##### `path` (string)
+
+The working directory where the command should be executed. If not specified, the command runs in the current working directory.
+
+```toml
+[task.frontend]
+cmd = "npm run dev"
+path = "./frontend"
+
+[task.backend]
+cmd = "go run main.go"
+path = "./backend"
+```
+
+Paths can be absolute or relative to the location of the `prun.toml` file.
+
+##### `env` (table)
+
+Environment variables to set for the task. These are merged with the parent environment.
+
+```toml
+[task.app]
+cmd = "npm run dev"
+env = { NODE_ENV = "development", PORT = "3000" }
+```
+
+You can also use the inline table syntax:
+
+```toml
+[task.app]
+cmd = "npm run dev"
+env.NODE_ENV = "development"
+env.PORT = "3000"
+```
+
+##### `shell` (boolean)
+
+Whether to execute the command through a shell. Defaults to `true`.
+
+When `shell = true` (default), commands are executed via `/bin/sh -c` on Unix-like systems, allowing shell features like pipes and redirects.
+
+When `shell = false`, the command is executed directly, which is faster but doesn't support shell features.
+
+```toml
+[task.app]
+cmd = "npm run dev"
+shell = true  # Use shell (default)
+
+[task.simple]
+cmd = "/usr/bin/my-binary"
+shell = false  # Execute directly
+```
+
+##### `watch` (boolean)
+
+Whether to automatically restart the task when files change. Defaults to `false`.
+
+When `watch = true`, the task will restart automatically when files in the task's `path` directory (or current directory if not specified) are modified.
+
+```toml
+[task.app]
+cmd = "npm run dev"
+watch = true  # Restart on file changes
+```
+
+**Watch Behavior:**
+
+* Watches the task's `path` directory (or current directory)
+* Debounced by 500ms to avoid excessive restarts
+* Automatically excludes: `.git`, `node_modules`, `vendor`, `dist`, `build`, and hidden directories
+* Only watches `Write` and `Create` file events
+
+You can also enable global watching for all tasks using the `-w` or `--watch` CLI flag.
+
+## Complete Example
+
+Here's a comprehensive example showing all configuration options:
+
+```toml
+tasks = ["database", "backend", "frontend", "worker"]
+
+[task.database]
+cmd = "docker-compose up postgres"
+watch = false  # Don't restart database on file changes
+
+[task.backend]
+cmd = "go run main.go"
+path = "./backend"
+env = { 
+  PORT = "8080",
+  DATABASE_URL = "postgres://localhost:5432/mydb",
+  NODE_ENV = "development"
+}
+watch = true  # Restart on file changes
+shell = true
+
+[task.frontend]
+cmd = "npm run dev"
+path = "./frontend"
+env = { 
+  PORT = "3000",
+  VITE_API_URL = "http://localhost:8080"
+}
+watch = true
+
+[task.worker]
+cmd = "celery -A tasks worker --loglevel=info"
+path = "./services/worker"
+env = { 
+  CELERY_BROKER_URL = "redis://localhost:6379/0"
+}
+watch = false
+```
+
+## Task Selection
+
+By default, prun runs all tasks listed in the `tasks` array. You can run specific tasks by passing their names as arguments:
+
+```bash
+# Run all tasks
+prun
+
+# Run only specific tasks
+prun backend frontend
+
+# Run with custom config
+prun -c dev.toml backend
+```
+
+## Environment Variable Inheritance
+
+Tasks inherit all environment variables from the parent process. Variables specified in the `env` field are merged with the inherited environment, with task-specific variables taking precedence.
+
+```bash
+# Parent environment
+export API_KEY=secret123
+
+# prun.toml
+[task.app]
+cmd = "npm run dev"
+env = { PORT = "3000" }  # API_KEY is still available
+```
+
+## Best Practices
+
+1. **Use descriptive task names**: Choose clear, meaningful names for your tasks
+   ```toml
+   tasks = ["frontend-dev", "api-server", "redis-cache"]
+   ```
+
+2. **Set working directories**: Use the `path` field to ensure commands run in the correct directory
+   ```toml
+   [task.frontend]
+   cmd = "npm run dev"
+   path = "./packages/frontend"
+   ```
+
+3. **Use environment variables**: Keep configuration flexible with environment variables
+   ```toml
+   [task.api]
+   cmd = "uvicorn main:app --reload"
+   env = { PORT = "8000", DEBUG = "true" }
+   ```
+
+4. **Enable watching for development**: Use `watch = true` for tasks that should restart on changes
+   ```toml
+   [task.dev-server]
+   cmd = "npm run dev"
+   watch = true
+   ```
+
+5. **Disable watching for long-running tasks**: Don't watch tasks like databases or external services
+   ```toml
+   [task.postgres]
+   cmd = "docker-compose up postgres"
+   watch = false
+   ```
+
+## Validation
+
+prun validates the configuration file when it starts:
+
+* **Missing config file**: Exits with code 2
+* **Parse errors**: Exits with code 3 and shows the error message
+* **Missing task definitions**: Tasks referenced in `tasks` array must have corresponding `[task.<name>]` sections
+* **Missing `cmd` field**: Each task must have a `cmd` field
+
+## Next Steps
+
+* See [Getting Started](/docs/getting-started) for a quick tutorial
+* Check the [Original Spec](/docs/original-spec) for detailed behavior specifications
+
+
+# Specification
+
+
+
+# Prun Specification
+
+This document contains the original project specification for `prun`, including goals, configuration format, CLI behavior, and implementation details.
+
+## Short Description
+
+`prun` is a small command-line tool that reads a `prun.toml` configuration file, starts multiple tasks (commands) in parallel, and streams their combined output to the console in real time. It's designed for local development workflows where several processes (app, server, databases, watchers) need to be run together.
+
+## Goals
+
+* Simple, predictable CLI for running multiple processes in parallel.
+* Clear, easy-to-edit configuration file (`prun.toml`).
+* Real-time, prefixed output per-task so users can distinguish logs.
+* Signal forwarding and graceful shutdown.
+* Minimal dependencies and easy packaging for Linux/macOS/Windows.
+
+## Config Format
+
+`prun` will look for `prun.toml` in the current working directory (or a location provided by a `--config` flag). The file is a TOML document with a `tasks` list and per-task tables.
+
+### Example
+
+```toml
+tasks = ["app", "redis_server", "server"]
+
+[task.app]
+cmd = "pnpm run dev"
+
+[task.redis_server]
+cmd = "redis-server"
+
+[task.server]
+cmd = "./server"
+path = "/home/user/my-server"
+```
+
+### Semantics
+
+* `tasks` is an ordered list of task names. Order is primarily for user readability; the runner will start tasks in the order listed but run them concurrently.
+* Each `[task.<name>]` table must include `cmd` (string). Optionally it may include:
+  * `path` (string) — working directory to run the command in.
+  * `env` (table) — map of environment variables (string -> string) to set for the task.
+  * `restart` (boolean|string) — whether/how to restart a task on exit: `false` (default), `true` (restart always), or a policy like `on-failure`.
+
+## CLI Behavior
+
+### Invocation
+
+```bash
+prun [flags] [--] [task1 task2 ...]
+```
+
+### Flags
+
+* `-c, --config <path>`: path to `prun.toml`. Defaults to `./prun.toml`.
+* `-v, --verbose`: enable verbose logs for prun internals.
+* `-l, --list`: print tasks defined and exit.
+* `-h, --help`: show usage.
+
+### Behavior
+
+* On start, `prun` searches for the config file. If not found, it prints a short message: "prun: no prun.toml found — run `prun help` to create one" and exits with status code 2.
+* If found, `prun` parses the TOML. If parsing fails, it prints the parse error and exits with status code 3.
+* If the user passes specific task names as arguments, only those tasks (in the order provided) are started. If no tasks are passed, all tasks listed under `tasks` are started, in that order.
+
+## Process Lifecycle and Output
+
+* `prun` starts all selected tasks as child processes.
+* For each task, `prun` captures stdout and stderr, prefixes each line with a short task label (e.g., `[app] `, `[redis_server] `) and writes to the main stdout/stderr stream. The prefix helps distinguish interleaved logs.
+* The prefixing should support configurable width or colorization when stdout is a TTY. When output is not a TTY (e.g., piped to a file), `prun` should omit colors and may shorten prefixes.
+* Output should be unbuffered and near-real-time. Use a line-based scanner or incremental flush to avoid large delays.
+
+## Exit Codes and Failure Policies
+
+* If any task exits with a non-zero status, `prun` should by default terminate all other tasks and exit with a non-zero status reflecting failure.
+* The `restart` policy per-task (if implemented) can override this behavior — e.g., tasks with `restart = true` will be restarted automatically and won't cause `prun` to exit unless explicitly configured.
+* On receiving termination signals (SIGINT, SIGTERM), `prun` should forward the signal to child processes and wait for them to exit gracefully (with a short timeout, e.g., 5s) before forcing termination.
+
+## Edge Cases and Considerations
+
+* Commands producing binary or very long lines — prefixing should be done safely (don't assume UTF-8 or small sizes).
+* Process groups and shells: commands in `cmd` may be shell forms. By default, `prun` should run the command through a shell (like `/bin/sh -c`) to support complex commands, but provide a `shell = false` option to run exec directly if desired.
+* Environment inheritance: tasks should inherit the parent environment unless overridden in `env`.
+* Port collisions and graceful restarts are out-of-scope for initial implementation.
+
+## Acceptance Criteria
+
+### Minimum Viable Product (MVP)
+
+* `prun` searches for `./prun.toml`. If absent, prints: "no prun.toml found — run `prun help`" and exits code 2.
+* Parses a valid `prun.toml` with at least `tasks` and `cmd` entries.
+* Starts all defined tasks concurrently, streams output with task prefixes, and shows both stdout and stderr combined in real time.
+* On a non-zero exit from any task, `prun` terminates remaining tasks and exits non-zero.
+* Handles SIGINT (Ctrl-C) by forwarding and cleanly shutting down processes.
+
+### Optional / Nice-to-Have (Post-MVP)
+
+* Colorized prefixes and adjustable width.
+* Per-task restart policies.
+* `--watch` to restart tasks when files change.
+* `--parallelism` to limit number of concurrently running tasks.
+* Built-in command to generate a sample `prun.toml` (`prun init`).
+* Windows-specific behavior and proper signal handling on Windows.
+* Interactive TUI mode (implemented).
+* File watching with debouncing (implemented).
+
+## Testing
+
+### Unit Tests
+
+* TOML parsing tests for valid and invalid configs.
+* Task selection logic (all tasks vs. subset by args).
+* Prefix formatting and TTY detection.
+
+### Integration Tests (Fast)
+
+* Start two small processes (e.g., `sh -c 'echo a; sleep 0.1; echo done'`) and assert `prun` output contains both prefixes.
+* Verify `prun` exits non-zero when a task fails.
+* Signal forwarding test: send SIGINT to `prun` and assert child processes receive term signal.
+
+## Security and Safety
+
+* Avoid shell injection risks by documenting that `cmd` is executed via a shell; if users supply untrusted config files, commands will run with the user's privileges.
+* The tool will not attempt to sandbox commands.
+
+## Implementation Plan (High Level)
+
+1. Parse CLI flags and find config path.
+2. Read and parse `prun.toml` into a typed config object.
+3. Resolve the list of tasks to run.
+4. For each task, spawn a child process with appropriate working dir and env.
+5. Start goroutines to read stdout/stderr line-by-line, prefix, and write to the main stdout/stderr with synchronization.
+6. Monitor child exits; on failure or signal, implement shutdown procedure.
+7. Add tests and sample config files.
+
+## Files Structure
+
+* `cmd/prun/main.go` — CLI entrypoint and wiring.
+* `internal/config/config.go` — TOML parsing (types + parser).
+* `internal/runner/runner.go` — process management, output streaming.
+* `tests/` — unit and integration tests described above.
+* `PROJECT_SPEC.md` — this spec.
+
+## Open Questions / Assumptions
+
+* Assumed implementation language: Go (based on repo), using `github.com/pelletier/go-toml` or `BurntSushi/toml` for parsing.
+* Assume running commands through `/bin/sh -c` by default for Unix-like systems.
+* Default timeout for graceful shutdown: 5s (configurable later).
+
+## Next Steps
+
+* Implement the config parser and unit tests for it.
+* Implement a basic runner that starts tasks and streams output.
+* Add signal handling and graceful shutdown.
+
+## Completion
+
+This file defines the project behaviour and acceptance criteria for `prun`. Implementers should follow the acceptance criteria for the MVP and add optional features later.
