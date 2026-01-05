@@ -32,7 +32,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: production-files
-          path: ./docs/build
+          path: ./docs/out
 
   deploy:
     name: Deploy
