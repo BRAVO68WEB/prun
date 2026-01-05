@@ -1,0 +1,263 @@
+---
+title: Configuration
+description: |
+  Complete reference for configuring prun.toml files with all available options.
+icon: ⚙️
+---
+
+# Configuration
+
+The `prun.toml` file is a TOML configuration file that defines the tasks you want to run in parallel. This guide covers all available configuration options.
+
+## File Location
+
+By default, prun looks for `prun.toml` in the current working directory. You can specify a different location using the `-c` or `--config` flag:
+
+```bash
+prun -c /path/to/custom.toml
+```
+
+## Basic Structure
+
+A minimal `prun.toml` file requires:
+
+1. A `tasks` array listing the task names
+2. A `[task.<name>]` section for each task with a `cmd` field
+
+```toml
+tasks = ["app", "server"]
+
+[task.app]
+cmd = "npm run dev"
+
+[task.server]
+cmd = "python -m http.server 8000"
+```
+
+## Configuration Fields
+
+### Top-Level: `tasks`
+
+An ordered array of task names. Tasks are started in this order but run concurrently.
+
+```toml
+tasks = ["database", "backend", "frontend"]
+```
+
+**Note:** The order is primarily for readability. All tasks run in parallel once started.
+
+### Task Configuration: `[task.<name>]`
+
+Each task must have its own configuration section.
+
+#### Required Fields
+
+##### `cmd` (string)
+
+The command to execute. This is the only required field for each task.
+
+```toml
+[task.app]
+cmd = "npm run dev"
+```
+
+Commands are executed through a shell by default, so you can use shell features like pipes, redirects, and environment variable expansion:
+
+```toml
+[task.app]
+cmd = "npm run dev | tee app.log"
+```
+
+#### Optional Fields
+
+##### `path` (string)
+
+The working directory where the command should be executed. If not specified, the command runs in the current working directory.
+
+```toml
+[task.frontend]
+cmd = "npm run dev"
+path = "./frontend"
+
+[task.backend]
+cmd = "go run main.go"
+path = "./backend"
+```
+
+Paths can be absolute or relative to the location of the `prun.toml` file.
+
+##### `env` (table)
+
+Environment variables to set for the task. These are merged with the parent environment.
+
+```toml
+[task.app]
+cmd = "npm run dev"
+env = { NODE_ENV = "development", PORT = "3000" }
+```
+
+You can also use the inline table syntax:
+
+```toml
+[task.app]
+cmd = "npm run dev"
+env.NODE_ENV = "development"
+env.PORT = "3000"
+```
+
+##### `shell` (boolean)
+
+Whether to execute the command through a shell. Defaults to `true`.
+
+When `shell = true` (default), commands are executed via `/bin/sh -c` on Unix-like systems, allowing shell features like pipes and redirects.
+
+When `shell = false`, the command is executed directly, which is faster but doesn't support shell features.
+
+```toml
+[task.app]
+cmd = "npm run dev"
+shell = true  # Use shell (default)
+
+[task.simple]
+cmd = "/usr/bin/my-binary"
+shell = false  # Execute directly
+```
+
+##### `watch` (boolean)
+
+Whether to automatically restart the task when files change. Defaults to `false`.
+
+When `watch = true`, the task will restart automatically when files in the task's `path` directory (or current directory if not specified) are modified.
+
+```toml
+[task.app]
+cmd = "npm run dev"
+watch = true  # Restart on file changes
+```
+
+**Watch Behavior:**
+- Watches the task's `path` directory (or current directory)
+- Debounced by 500ms to avoid excessive restarts
+- Automatically excludes: `.git`, `node_modules`, `vendor`, `dist`, `build`, and hidden directories
+- Only watches `Write` and `Create` file events
+
+You can also enable global watching for all tasks using the `-w` or `--watch` CLI flag.
+
+## Complete Example
+
+Here's a comprehensive example showing all configuration options:
+
+```toml
+tasks = ["database", "backend", "frontend", "worker"]
+
+[task.database]
+cmd = "docker-compose up postgres"
+watch = false  # Don't restart database on file changes
+
+[task.backend]
+cmd = "go run main.go"
+path = "./backend"
+env = { 
+  PORT = "8080",
+  DATABASE_URL = "postgres://localhost:5432/mydb",
+  NODE_ENV = "development"
+}
+watch = true  # Restart on file changes
+shell = true
+
+[task.frontend]
+cmd = "npm run dev"
+path = "./frontend"
+env = { 
+  PORT = "3000",
+  VITE_API_URL = "http://localhost:8080"
+}
+watch = true
+
+[task.worker]
+cmd = "celery -A tasks worker --loglevel=info"
+path = "./services/worker"
+env = { 
+  CELERY_BROKER_URL = "redis://localhost:6379/0"
+}
+watch = false
+```
+
+## Task Selection
+
+By default, prun runs all tasks listed in the `tasks` array. You can run specific tasks by passing their names as arguments:
+
+```bash
+# Run all tasks
+prun
+
+# Run only specific tasks
+prun backend frontend
+
+# Run with custom config
+prun -c dev.toml backend
+```
+
+## Environment Variable Inheritance
+
+Tasks inherit all environment variables from the parent process. Variables specified in the `env` field are merged with the inherited environment, with task-specific variables taking precedence.
+
+```bash
+# Parent environment
+export API_KEY=secret123
+
+# prun.toml
+[task.app]
+cmd = "npm run dev"
+env = { PORT = "3000" }  # API_KEY is still available
+```
+
+## Best Practices
+
+1. **Use descriptive task names**: Choose clear, meaningful names for your tasks
+   ```toml
+   tasks = ["frontend-dev", "api-server", "redis-cache"]
+   ```
+
+2. **Set working directories**: Use the `path` field to ensure commands run in the correct directory
+   ```toml
+   [task.frontend]
+   cmd = "npm run dev"
+   path = "./packages/frontend"
+   ```
+
+3. **Use environment variables**: Keep configuration flexible with environment variables
+   ```toml
+   [task.api]
+   cmd = "uvicorn main:app --reload"
+   env = { PORT = "8000", DEBUG = "true" }
+   ```
+
+4. **Enable watching for development**: Use `watch = true` for tasks that should restart on changes
+   ```toml
+   [task.dev-server]
+   cmd = "npm run dev"
+   watch = true
+   ```
+
+5. **Disable watching for long-running tasks**: Don't watch tasks like databases or external services
+   ```toml
+   [task.postgres]
+   cmd = "docker-compose up postgres"
+   watch = false
+   ```
+
+## Validation
+
+prun validates the configuration file when it starts:
+
+- **Missing config file**: Exits with code 2
+- **Parse errors**: Exits with code 3 and shows the error message
+- **Missing task definitions**: Tasks referenced in `tasks` array must have corresponding `[task.<name>]` sections
+- **Missing `cmd` field**: Each task must have a `cmd` field
+
+## Next Steps
+
+- See [Getting Started](/docs/getting-started) for a quick tutorial
+- Check the [Original Spec](/docs/original-spec) for detailed behavior specifications
+

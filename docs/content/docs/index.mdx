@@ -1,0 +1,162 @@
+---
+title: Getting Started
+description: |
+  Learn how to get started with prun and run your first parallel tasks.
+icon: ⚡
+---
+
+This guide will help you get up and running with prun in just a few minutes.
+
+## Prerequisites
+
+- prun installed (see [Installation](/docs/installation))
+- A project directory where you want to run multiple commands
+
+## Step 1: Create a Configuration File
+
+Create a `prun.toml` file in your project root. This file defines the tasks you want to run in parallel.
+
+Here's a simple example:
+
+```toml
+tasks = ["app", "redis"]
+
+[task.app]
+cmd = "npm run dev"
+
+[task.redis]
+cmd = "redis-server"
+```
+
+## Step 2: Run Your Tasks
+
+Simply run:
+
+```bash
+prun
+```
+
+This will start all tasks defined in your `prun.toml` file in parallel. You'll see output from all tasks with prefixes like `[app]` and `[redis]` to distinguish between them.
+
+## Step 3: Run Specific Tasks
+
+You can also run only specific tasks by passing their names as arguments:
+
+```bash
+prun app
+```
+
+Or multiple specific tasks:
+
+```bash
+prun app redis
+```
+
+## Interactive Mode
+
+For a better experience, especially when running many tasks, use interactive mode:
+
+```bash
+prun -i
+```
+
+Interactive mode provides:
+- A task list showing the status of each task
+- Filtered log view for each task
+- Keyboard navigation to switch between tasks
+- Scrollable logs with PgUp/PgDn, Home/End
+
+### Interactive Mode Controls
+
+- `↑/↓` or `k/j` - Navigate between tasks
+- `PgUp/PgDn` - Scroll logs up/down
+- `Home/End` - Jump to top/bottom of logs
+- `Space` - Page down in logs
+- `q` or `Esc` or `Ctrl-C` - Quit and stop all tasks
+
+## File Watching
+
+Enable automatic restarts when files change:
+
+```bash
+prun -w
+```
+
+Or combine with interactive mode:
+
+```bash
+prun -i -w
+```
+
+You can also configure per-task watching in your `prun.toml`:
+
+```toml
+[task.app]
+cmd = "npm run dev"
+watch = true  # Restart this task on file changes
+```
+
+## Common Use Cases
+
+### Full-Stack Development
+
+Run your frontend, backend, and database together:
+
+```toml
+tasks = ["frontend", "backend", "database"]
+
+[task.frontend]
+cmd = "npm run dev"
+path = "./frontend"
+
+[task.backend]
+cmd = "go run main.go"
+path = "./backend"
+
+[task.database]
+cmd = "docker-compose up postgres"
+```
+
+### Microservices
+
+Run multiple services in parallel:
+
+```toml
+tasks = ["api", "auth", "worker"]
+
+[task.api]
+cmd = "python -m uvicorn api:app --reload"
+path = "./services/api"
+
+[task.auth]
+cmd = "python -m uvicorn auth:app --reload"
+path = "./services/auth"
+
+[task.worker]
+cmd = "celery -A tasks worker"
+path = "./services/worker"
+```
+
+### Development Tools
+
+Run your app alongside development tools:
+
+```toml
+tasks = ["app", "redis", "vite"]
+
+[task.app]
+cmd = "bun dev"
+
+[task.redis]
+cmd = "redis-server"
+
+[task.vite]
+cmd = "vite build --watch"
+```
+
+## Next Steps
+
+- Learn about [Configuration](/docs/prun-toml-configuration) options
+- Check out the [Original Spec](/docs/original-spec) for detailed behavior
+- Explore all available CLI flags with `prun --help`
+
