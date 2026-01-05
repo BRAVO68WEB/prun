@@ -1,21 +1,10 @@
-import type { Route } from './+types/home';
-import { HomeLayout } from 'fumadocs-ui/layouts/home';
-import { Link } from 'react-router';
-import { baseOptions } from '@/lib/layout.shared';
+import Link from 'next/link';
 import { Card, Cards } from '@/components/cards';
 import { TOMLHighlight } from '@/components/toml-highlight';
 
-export function meta({}: Route.MetaArgs) {
-  return [
-    { title: 'Prun' },
-    { name: 'description', content: 'Run multiple commands in parallel with real-time output streaming.' },
-  ];
-}
-
-export default function Home() {
+export default function HomePage() {
   return (
-    <HomeLayout {...baseOptions()}>
-      <div className="flex flex-col items-center min-h-[calc(100vh-4rem)]">
+    <div className="flex flex-col items-center min-h-[calc(100vh-4rem)]">
         {/* Hero Section */}
         <div className="relative w-full overflow-hidden">
           {/* Background gradient */}
@@ -52,14 +41,14 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link
                 className="group relative px-8 py-4 bg-fd-primary text-fd-primary-foreground rounded-full font-semibold text-base hover:bg-fd-primary/90 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-fd-primary/30"
-                to="/docs/installation"
+                href="/docs/installation"
               >
                 Install
                 <span className="inline-block ml-2 transform group-hover:translate-x-1 transition-transform">→</span>
               </Link>
               <Link
                 className="px-8 py-4 border-2 border-fd-border rounded-full font-semibold text-base hover:bg-fd-muted hover:border-fd-primary/50 transition-all duration-300"
-                to="/docs"
+                href="/docs"
               >
                 View Documentation
               </Link>
@@ -166,6 +155,5 @@ watch = true`} />
           </div>
         </div>
       </div>
-    </HomeLayout>
   );
 }

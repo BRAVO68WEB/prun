@@ -1,4 +1,4 @@
-import { Link } from 'react-router';
+import Link from 'next/link';
 
 interface CardProps {
   title: string;
@@ -11,7 +11,7 @@ interface CardProps {
 export function Card({ title, href, description, icon, gradient }: CardProps) {
   return (
     <Link
-      to={href}
+      href={href}
       className="group relative flex flex-col gap-3 rounded-xl border border-fd-border bg-fd-card p-6 transition-all duration-300 hover:border-fd-primary/50 hover:shadow-lg hover:shadow-fd-primary/10 hover:-translate-y-1 overflow-hidden"
     >
       {/* Gradient background on hover */}
